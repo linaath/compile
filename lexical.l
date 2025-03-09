@@ -58,7 +58,7 @@ chaine         \"[^\"]*\"
      printf("Commentaire bloc simple : %s\n", yytext);
 }
 {nombre_parenthese} { 
-    // Extraire le nombre entre parenthèses
+   
     char *inner = strdup(yytext + 1); // Sauter la première parenthèse
     inner[strlen(inner) - 1] = '\0';  // Supprimer la dernière parenthèse
     int val = atoi(inner);
