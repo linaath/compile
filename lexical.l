@@ -21,9 +21,10 @@ extern void afficher_table_symboles();
 
 %option noyywrap
 
-lettre         [a-zA-Z]
+lettre_maj_min       [a-zA-Z]
+lettre [a-z]
 chiffre        [0-9]
-idf            {lettre}({lettre}|{chiffre}|_)*
+idf            {lettre_maj_min}({lettre}|{chiffre}|_)*
 entier         {chiffre}+
 reel           {chiffre}+\.{chiffre}+
 nombre_signe   "("{signe}?{entier}")"
