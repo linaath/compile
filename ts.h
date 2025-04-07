@@ -1,4 +1,3 @@
-/* ts.h - Définition des structures et fonctions pour la table des symboles */
 #ifndef TS_H
 #define TS_H
 
@@ -6,57 +5,56 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TAILLE_TABLE 100
-#define MAX_NOM 15
-
-// Types d'entités possibles
-typedef enum {
-    ENTITE_VARIABLE,
-    ENTITE_CONSTANTE,
-    ENTITE_TABLEAU,
-    ENTITE_MOT_CLE,
-    ENTITE_SEPARATEUR
-} code_entite;
-
-// Types de données possibles
+// Types de symboles
 typedef enum {
     TYPE_ENTIER,
     TYPE_REEL,
     TYPE_TABLEAU_ENTIER,
-    TYPE_TABLEAU_REEL
+    TYPE_TABLEAU_REEL,
+    TYPE_UNDEFINED
 } type_symbole;
 
-// Union pour stocker les valeurs
-typedef union {
-    int valeur_int;
-    double valeur_float;
-} valeur_union;
+// Codes d'entités
+typedef enum {
+    ENTITE_VARIABLE,
+    ENTITE_CONSTANTE,
+    ENTITE_TABLEAU,
+    ENTITE_MOTCLE,
+    ENTITE_SEPARATEUR
+} code_entite;
 
-// Structure d'un symbole dans la table
+// Structure pour la table des symboles des identificateurs et constantes
 typedef struct {
-    int etat;                  // 0: libre, 1: occupé
-    char nom[MAX_NOM];         // Nom du symbole
-    code_entite code;          // Code de l'entité
-    type_symbole type;         // Type du symbole
-    int taille;                // Taille (1 pour variable simple, n pour tableau)
-    valeur_union valeur;       // Valeur (pour constantes)
-    int ligne;                 // Ligne de déclaration
-    int colonne;               // Colonne de déclaration
-} symbole;
+    int state;              // 0: libre, 1: occupé
+    char name[20];          // Nom de l'entité
+    char code[20];          // Code de l'entité (IDF, CONST, etc.)
+    char type[20];          // Type de l'entité (integer, reel, etc.)
+    char val[20];           // Valeur de l'entité (pour les constantes)
+    int tab_size;           // Taille du tableau (pour les tableaux)
+} TypeTS;
 
-// Variables globales (définies dans ts.c)
-extern symbole table_symboles[TAILLE_TABLE];
-extern int nb_symboles;
+// Structure pour les tables des mots clés et séparateurs
+typedef struct {
+    int state;              // 0: libre, 1: occupé
+    char name[20];          // Nom de l'entité
+    char code[20];          // Code de l'entité
+} TypeSM;
 
-// Prototypes des fonctions
-void initialiser_table_symboles();
-int rechercher_symbole(char *nom);
-int inserer_symbole(char *nom, code_entite code, type_symbole type, int taille, int ligne, int colonne);
-void inserer_valeur_entier(int position, int valeur);
-void inserer_valeur_reel(int position, double valeur);
-char* get_type_string(type_symbole type);
-char* get_code_string(code_entite code);
-void afficher_table_symboles();
+// Déclaration des tables de symboles
+extern TypeTS TS[200];             // Table des symboles pour les IDF et constantes
+extern TypeSM tabM[50];            // Table des symboles pour les mots clés
+extern TypeSM tabS[50];            // Table des symboles pour les séparateurs
 
-#endif /* TS_H */
+// Fonctions de gestion des tables de symboles
+void initialization();
+void rechercher(char entite[], char code[], char type[], char val[], int y);
+void inserer(char entite[], char code[], char type[], char val[], int i, int y);
+void set_tab_size(int index, int size);
+void afficher();
 
+// Fonctions de recherche spécifiques aux types de tables
+int recherche_idf_declared(char entite[]);
+int recherche_motcle(char entite[]);
+int recherche_separateur(char entite[]);
+
+#endif // TS_H

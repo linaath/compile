@@ -4,19 +4,12 @@
 #include <string.h>
 #include "syntax.tab.h"
 #include "ts.h"
-
+void yyerror(const char *msg);
 int ligne = 1;
 int colonne = 1;
 
 #define MIN_INT -32768
 #define MAX_INT 32767
-
-
-extern int inserer_symbole(char *nom, code_entite code, type_symbole type, int taille, int ligne, int colonne);
-extern int rechercher_symbole(char* lexeme);
-extern void inserer_valeur_entier(int index, int val);
-extern void inserer_valeur_reel(int index, double val);
-extern void afficher_table_symboles();
 %}
 
 %option noyywrap
@@ -46,10 +39,9 @@ chaine         \"[^\"]*\"
     }
     yylval.ival = val;
     
-    int index = inserer_symbole(yytext, ENTITE_CONSTANTE, TYPE_ENTIER, 1, ligne, colonne);
-    if (index >= 0) {
-        inserer_valeur_entier(index, val);
-    }
+    char val_str[20];
+    sprintf(val_str, "%d", val);
+    rechercher(yytext, "CONST", "Int", val_str, 1);
     
     free(inner);
     colonne += yyleng; 
@@ -62,10 +54,9 @@ chaine         \"[^\"]*\"
     inner[strlen(inner) - 1] = '\0';  
     yylval.fval = atof(inner);
     
-    int index = inserer_symbole(yytext, ENTITE_CONSTANTE, TYPE_REEL, 1, ligne, colonne);
-    if (index >= 0) {
-        inserer_valeur_reel(index, yylval.fval);
-    }
+    char val_str[20];
+    sprintf(val_str, "%f", yylval.fval);
+    rechercher(yytext, "CONST", "Float", val_str, 1);
     
     free(inner);
     colonne += yyleng; 
@@ -73,17 +64,26 @@ chaine         \"[^\"]*\"
     return FLOAT_VAL;
 }
 
-"MainPrgm"      { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return MAINPRGM; }
-"Var"           { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return VAR; }
-"BeginPg"       { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return BEGINPG; }
-"EndPg"         { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return ENDPG; }
-
-"let"           { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return LET; }
-"@define"       { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return DEFINE; }
-"Const"         { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return CONST; }
-
-"Int"           { colonne += yyleng; printf("Type: %s\n", yytext); return INT_TYPE; }
-"Float"         { colonne += yyleng; printf("Type: %s\n", yytext); return FLOAT_TYPE; }
+"MainPrgm"      { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return MAINPRGM; }
+"Var"           { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return VAR; }
+"BeginPg"       { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return BEGINPG; }
+"EndPg"         { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return ENDPG; }
+"let"           { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return LET; }
+"@define"       { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return DEFINE; }
+"Const"         { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return CONST; }
+"Int"           { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return INT_TYPE; }
+"Float"         { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return FLOAT_TYPE; }
+"if"            { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return IF; }
+"then"          { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return THEN; }
+"else"          { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return ELSE; }
+"do"            { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return DO; }
+"while"         { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return WHILE; }
+"for"           { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return FOR; }
+"from"          { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return FROM; }
+"to"            { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return TO; }
+"step"          { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return STEP; }
+"input"         { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return INPUT; }
+"output"        { rechercher(yytext, "Mot-cle", "", "", 2); colonne += yyleng; return OUTPUT; }
 
 {entier} { 
     int val = atoi(yytext);
@@ -91,10 +91,11 @@ chaine         \"[^\"]*\"
         yyerror("Erreur lexicale: Valeur entière hors limites (-32768 à 32767)");
         exit(1);
     }
-    int index = inserer_symbole(yytext, ENTITE_CONSTANTE, TYPE_ENTIER, 1, ligne, colonne);
-    if (index >= 0) {
-        inserer_valeur_entier(index, val);
-    }
+    
+    char val_str[20];
+    sprintf(val_str, "%d", val);
+    rechercher(yytext, "CONST", "Int", val_str, 1);
+    
     yylval.ival = val;
     colonne += yyleng; 
     printf("Nombre entier : %s\n", yytext);
@@ -103,54 +104,41 @@ chaine         \"[^\"]*\"
 
 {reel} { 
     double val = atof(yytext);
+    
+    char val_str[20];
+    sprintf(val_str, "%f", val);
+    rechercher(yytext, "CONST", "Float", val_str, 1);
+    
     yylval.fval = val;
-    int index = inserer_symbole(yytext, ENTITE_CONSTANTE, TYPE_REEL, 1, ligne, colonne);
-    if (index >= 0) {
-        inserer_valeur_reel(index, val);
-    }
     colonne += yyleng; 
     printf("Nombre reel : %s\n", yytext);
     return FLOAT_VAL;
 }
 
-":"             { colonne += yyleng; printf("Symbole: %s\n", yytext); return COLON; }
-";"             { colonne += yyleng; printf("Symbole: %s\n", yytext); return SEMICOLON; }
-","             { colonne += yyleng; printf("Symbole: %s\n", yytext); return COMMA; }
-"["             { colonne += yyleng; printf("Symbole: %s\n", yytext); return LBRACKET; }
-"]"             { colonne += yyleng; printf("Symbole: %s\n", yytext); return RBRACKET; }
-"="             { colonne += yyleng; printf("Symbole: %s\n", yytext); return EQUALS; }
-
-":="            { colonne += yyleng; printf("Operateur d'affectation: %s\n", yytext); return ASSIGN; }
-"("             { colonne += yyleng; printf("Parenthese ouvrante: %s\n", yytext); return LPAREN; }
-")"             { colonne += yyleng; printf("Parenthese fermante: %s\n", yytext); return RPAREN; }
-"{"             { colonne += yyleng; printf("Accolade ouvrante: %s\n", yytext); return LBRACE; }
-"}"             { colonne += yyleng; printf("Accolade fermante: %s\n", yytext); return RBRACE; }
-
-"if"            { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return IF; }
-"then"          { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return THEN; }
-"else"          { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return ELSE; }
-"do"            { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return DO; }
-"while"         { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return WHILE; }
-"for"           { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return FOR; }
-"from"          { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return FROM; }
-"to"            { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return TO; }
-"step"          { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return STEP; }
-"input"         { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return INPUT; }
-"output"        { colonne += yyleng; printf("Mot-cle: %s\n", yytext); return OUTPUT; }
-
-"AND"           { colonne += yyleng; printf("Operateur logique: %s\n", yytext); return AND; }
-"OR"            { colonne += yyleng; printf("Operateur logique: %s\n", yytext); return OR; }
-"!"             { colonne += yyleng; printf("Operateur logique: %s\n", yytext); return NOT; }
-"+"             { colonne += yyleng; printf("Operateur arithmetique: %s\n", yytext); return PLUS; }
-"-"             { colonne += yyleng; printf("Operateur arithmetique: %s\n", yytext); return MINUS; }
-"*"             { colonne += yyleng; printf("Operateur arithmetique: %s\n", yytext); return MULT; }
-"/"             { colonne += yyleng; printf("Operateur arithmetique: %s\n", yytext); return DIV; }
-"<="            { colonne += yyleng; printf("Operateur de comparaison: %s\n", yytext); return LE; }
-">="            { colonne += yyleng; printf("Operateur de comparaison: %s\n", yytext); return GE; }
-"=="            { colonne += yyleng; printf("Operateur de comparaison: %s\n", yytext); return EQ; }
-"!="            { colonne += yyleng; printf("Operateur de comparaison: %s\n", yytext); return NE; }
-"<"             { colonne += yyleng; printf("Operateur de comparaison: %s\n", yytext); return LT; }
-">"             { colonne += yyleng; printf("Operateur de comparaison: %s\n", yytext); return GT; }
+":"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return COLON; }
+";"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return SEMICOLON; }
+","             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return COMMA; }
+"["             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return LBRACKET; }
+"]"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return RBRACKET; }
+"="             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return EQUALS; }
+":="            { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return ASSIGN; }
+"("             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return LPAREN; }
+")"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return RPAREN; }
+"{"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return LBRACE; }
+"}"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return RBRACE; }
+"+"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return PLUS; }
+"-"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return MINUS; }
+"*"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return MULT; }
+"/"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return DIV; }
+"<="            { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return LE; }
+">="            { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return GE; }
+"=="            { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return EQ; }
+"!="            { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return NE; }
+"<"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return LT; }
+">"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return GT; }
+"AND"           { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return AND; }
+"OR"            { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return OR; }
+"!"             { rechercher(yytext, "Separateur", "", "", 3); colonne += yyleng; return NOT; }
 
 {chaine} {
     yylval.sval = strdup(yytext);
@@ -178,7 +166,9 @@ chaine         \"[^\"]*\"
         }
     }
     
-  
+    // Par défaut, on l'insère comme IDF, le type sera défini plus tard dans l'analyse syntaxique
+    rechercher(yytext, "IDF", "", "", 1);
+    
     yylval.sval = strdup(yytext);
     printf("Identificateur : %s\n", yytext);
     
@@ -190,6 +180,7 @@ chaine         \"[^\"]*\"
     printf("Commentaire ligne : %s\n", yytext);
     return COMMENTAIRE_LIGNE;
 }
+
 {comment_bloc}  { 
     int i;
     for(i = 0; i < yyleng; i++){
@@ -203,6 +194,7 @@ chaine         \"[^\"]*\"
     printf("Commentaire bloc : %s\n", yytext);
     return COMMENTAIRE_BLOC;
 }
+
 [ \t]+          { colonne += yyleng; }  
 \n              { ligne++; colonne = 1; } 
 
@@ -212,6 +204,7 @@ chaine         \"[^\"]*\"
 }
 
 %%
+
 
 /* Cette fonction est utile pour les tests lexicaux séparés */
 int main_lex(int argc, char** argv) {
@@ -227,7 +220,7 @@ int main_lex(int argc, char** argv) {
     }
     
     // Initialisation de la table des symboles
-    initialiser_table_symboles();
+    initialization();
     
     int token;
     while ((token = yylex()) != 0) {
@@ -235,7 +228,6 @@ int main_lex(int argc, char** argv) {
                token, yytext, ligne, colonne);
     }
     
-    afficher_table_symboles(); // Afficher la table des symboles à la fin
+    afficher(); // Afficher la table des symboles à la fin
     return 0;
 }
-

@@ -9,19 +9,19 @@ avec des - isoles
 --}
 
 < !- Test de declaration de variables -!>
-let x, y, z : Int ;
+let x, y, z ,lina: Int ;
 let a, b : Float ;
 let tab1, tab2 : [Int; 10] ;
 let tab_float : [Float; 25] ;
-
+let i : Int ; 
 < !- Test des identifiants valides -!>
 let valid_id, a123, ab_cd : Int ;
 
-< !- Test des constantes - !>
-@define Const PI : Float = 3.14 ;
-@define Const MAX : Int = 100 ;
-@define Const MIN : Int = (-32768) ;
-@define Const POSITIVE : Int = (+100) ;
+< !- Test des constantes -!>
+@define Const Pi : Float = 3.14 ;
+@define Const Max : Int = 100 ;
+@define Const Min : Int = (-32768) ;
+@define Const Positive : Int = (+100) ;
 
 BeginPg
 {
@@ -57,15 +57,15 @@ BeginPg
         output("y n'est pas égal à 0") ;
     }
     
-    < !- Test des operateurs logiques -!>
-    if ((x > 0) AND (y > 0)) then {
+    < !- Test des operateurs logiques -!>  
+   if ((x > 0 AND y > 0)) then {
         output("x et y sont positifs") ;
     }
     
-    if ((x < 0) OR (y < 0)) then {
+    if ((x < 0 OR y < 0)) then {
         output("Au moins un parmi x et y est negatif") ;
     }
-    
+
     if (!(x == 0)) then {
         output("x n'est pas egal à 0") ;
     }
@@ -86,7 +86,7 @@ BeginPg
     < !- Test des expressions complexes -!>
     z := (x + y) * (a / b) + (-3) ;
     
-    < !- Test des tableaux - !>
+    < !- Test des tableaux -!>
     tab1[0] := 100 ;
     tab2[5] := tab1[0] * 2 ;
     
@@ -97,7 +97,7 @@ BeginPg
             if (x == 5) then {
                 output("x vaut 5") ;
             }
-        } while (x > 0) ;
+        } while (x >= 0) ;
     } else {
         for i from 0 to 5 step 1 {
             tab1[i] := 0 ;
