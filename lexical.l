@@ -1,3 +1,4 @@
+
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -231,3 +232,4 @@ int main_lex(int argc, char** argv) {
     afficher(); // Afficher la table des symboles à la fin
     return 0;
 }
+
